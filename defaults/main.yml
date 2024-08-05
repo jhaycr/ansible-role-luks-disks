@@ -1,0 +1,13 @@
+---
+# defaults file for jhaycr.luks_disks
+ vars:
+    luks_key_file: /etc/luks.key
+
+    luks_disks_validate_serial: true
+    luks_disks: []
+    #  - name: "parity1"
+    #    device: "/dev/sdb"
+    #    serial: "ABC123"
+    #  - name: "data1"
+    #    device: "/dev/sdc"
+    #    serial: "DEF456"

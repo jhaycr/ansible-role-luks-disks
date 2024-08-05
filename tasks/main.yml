@@ -1,0 +1,8 @@
+---
+
+- name: validate disks
+  ansible.builtin.include_tasks: validate-disks.yml
+  when: "luks_disks_validate_serial is true"
+
+- name: provision disks
+  ansible.builtin.include_tasks: provision-disks.yml

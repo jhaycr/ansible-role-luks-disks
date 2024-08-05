@@ -1,0 +1,71 @@
+---
+- name: Install required packages
+  become: yes
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    pkg:
+    - cryptsetup
+
+- name: Check if LUKS keyfile exists
+  become: yes
+  stat:
+    path: "{{ luks_keyfile_path }}"
+  register: stat_result
+
+- name: Create LUKS keyfile
+  become: yes
+  ansible.builtin.command: "dd if=/dev/urandom of={{ luks_keyfile_path }} bs=512 count=8"
+  when: not stat_result.stat.exists
+
+- name: Change file ownership, group and permissions
+  become: yes
+  ansible.builtin.file:
+    path: "{{ luks_keyfile_path }}"
+    mode: '0600'
+
+- name: Copy file with owner and permissions
+  become: yes
+  ansible.builtin.fetch:
+    src: "{{ luks_keyfile_path }}"
+    dest: "{{ luks_keyfile_local_backup_path }}"
+    flat: "yes"
+
+- name: Create LUKS container
+  become: yes
+  community.crypto.luks_device:
+    device: "{{ item.device }}"
+    label: "{{ item.name }}"
+    name: "crypt-{{ item.name }}"
+    state: "opened"
+    # present | mounted | opened | absent
+    keyfile: "{{ luks_keyfile_path }}"
+  loop: "{{ luks_disks }}"
+
+- name: Create filesystem on device
+  become: yes
+  community.general.filesystem:
+    fstype: "{{ item.fstype }}"
+    dev: "/dev/mapper/crypt-{{ item.name }}"
+    state: "present"
+  loop: "{{ luks_disks }}"
+
+- name: Configure crypttab
+  community.general.crypttab:
+    name: 'crypt-{{ item.name }}'
+    backing_device: '{{ item.device }}'
+    opts: luks
+    state: present
+    password: "{{ luks_keyfile_path }}"
+  loop: '{{ luks_disks }}'
+
+- name: Mount device
+  become: yes
+  ansible.posix.mount:
+    path: "/mnt/{{ item.name }}"
+    src: "/dev/mapper/crypt-{{ item.name }}"
+    boot: false
+    opts: "defaults,nofail,user_xattr,noexec,usrjquota=aquota.user,grpjquota=aquota.group,jqfmt=vfsv0,acl"
+    fstype: "{{ item.fstype }}"
+    state: "mounted"
+  loop: "{{ luks_disks }}"
