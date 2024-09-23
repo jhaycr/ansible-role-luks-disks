@@ -51,6 +51,7 @@
   loop: "{{ luks_disks }}"
 
 - name: Configure crypttab
+  no_log: true
   community.general.crypttab:
     name: 'crypt-{{ item.name }}'
     backing_device: '{{ item.device }}'
