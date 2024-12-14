@@ -1,40 +1,36 @@
 ---
+# tasks/validate-disks.yml
 - name: Gather disk information
-  command: lsblk -o NAME,UUID,SERIAL,LABEL,VENDOR,MODEL,FSTYPE,SIZE -J
+  command: lsblk -o NAME,SERIAL,LABEL,VENDOR,MODEL,FSTYPE,SIZE -J
   register: lsblk_output
   changed_when: false
 
 - name: Set disk facts
   set_fact:
     disks_info: >-
-      {{ lsblk_output.stdout | from_json | json_query('blockdevices[*].{name: name, uuid:uuid, serial: serial, label: label, vendor: vendor, model: model, fstype: fstype, size: size}') | selectattr('serial', 'defined') | list }}
+      {{ lsblk_output.stdout | from_json | json_query('blockdevices[*].{name: name, serial: serial, label: label, vendor: vendor, model: model, fstype: fstype, size: size}') | selectattr('serial', 'defined') | list }}
 
 - name: Debug disk information
   debug:
     var: disks_info
 
-- name: Initialize mismatched disks list
-  set_fact:
-    mismatched_disks: []
-
 - name: Check for serial mismatches
-  set_fact:
-    mismatched_disks: "{{ mismatched_disks + [item | combine({'expected_uuid': expected_uuid, 'expected_label': expected_label, 'expected_model': expected_model, 'expected_size': expected_size})] }}"
-  loop: "{{ luks_disks }}"
-  vars:
-    expected_disk: "{{ disks_info | selectattr('uuid', 'equalto', item.uuid) | first | default({}) }}"
-    expected_uuid: "{{ expected_disk.uuid | default('N/A') }}"
-    expected_serial: "{{ expected_disk.serial | default('N/A') }}"
-    expected_label: "{{ expected_disk.label | default('N/A') }}"
-    expected_model: "{{ expected_disk.model | default('N/A') }}"
-    expected_size: "{{ expected_disk.size | default('N/A') }}"
-  when: item.serial != expected_serial
+  block:
+    - name: Find disks with mismatched serials
+      set_fact:
+        mismatched_disks: >-
+          {{ luks_disks | selectattr('serial', 'in', disks_info | map(attribute='serial') | list)
+             | rejectattr('serial', 'in', disks_info | selectattr('serial', 'in', luks_disks | map(attribute='serial') | list)
+                  | map(attribute='serial') | list) 
+             | list }}
 
-- name: Alert on mismatched disks
-  debug:
-    msg: >-
-      Disk {{ item.name }} with device {{ item.device }} has a mismatched serial.
-      Expected: {{ item.expected_serial }}, Actual: {{ item.serial }}.
-      Label: {{ item.expected_label }}, Model: {{ item.expected_model }}, Size: {{ item.expected_size }}.
-  with_items: "{{ mismatched_disks }}"
-  failed_when: mismatched_disks | length > 0
+    - name: Alert on mismatched disks
+      fail:
+        msg: |
+          Disk configuration mismatch detected:
+          {% for disk in mismatched_disks %}
+          - Device: {{ disk.device }}
+            Expected Serial: {{ disk.serial }}
+            Available Serials: {{ disks_info | map(attribute='serial') | list }}
+          {% endfor %}
+      when: mismatched_disks | length > 0
