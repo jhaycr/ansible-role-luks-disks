@@ -6,8 +6,11 @@
     luks_disks_validate_serial: true
     luks_disks: []
     #  - name: "parity1"
-    #    device: "/dev/sdb"
+    #    device: "/dev/disk/by-id/ata-MODEL_ABC123"
     #    serial: "ABC123"
     #  - name: "data1"
-    #    device: "/dev/sdc"
+    #    device: "/dev/disk/by-id/ata-MODEL_DEF456"
     #    serial: "DEF456"
+    #  - name: "data2"
+    #    device: "/dev/sdc"
+    #    serial: "GHI789"

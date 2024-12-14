@@ -44,15 +44,15 @@ This playbook creates a keyfile on the remote machine, copies it to the source m
     luks_disks_validate_serial: true
     luks_disks:
       - name: "parity1"
-        device: "/dev/sdc"
+        device: "/dev/disk/by-id/ata-MODEL_ABC123"
         serial: "ABC123"
         fstype: ext4
       - name: "data1"
-        device: "/dev/sdd"
+        device: "/dev/disk/by-id/ata-MODEL_DEF456"
         serial: "DEF456"
         fstype: ext4
       - name: "data2"
-        device: "/dev/sde"
+        device: "/dev/disk/by-id/ata-MODEL_GHI789"
         serial: "GHI789"
         fstype: ext4
 ```
