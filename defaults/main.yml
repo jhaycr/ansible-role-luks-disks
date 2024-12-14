@@ -1,16 +1,19 @@
 ---
 # defaults file for jhaycr.luks_disks
- vars:
-    luks_key_file: /etc/luks.key
+luks_key_file: /etc/luks.key
 
-    luks_disks_validate_serial: true
-    luks_disks: []
-    #  - name: "parity1"
-    #    device: "/dev/disk/by-id/ata-MODEL_ABC123"
-    #    serial: "ABC123"
-    #  - name: "data1"
-    #    device: "/dev/disk/by-id/ata-MODEL_DEF456"
-    #    serial: "DEF456"
-    #  - name: "data2"
-    #    device: "/dev/sdc"
-    #    serial: "GHI789"
+luks_disks_validate_serial: true
+luks_disks: []
+   #  - name: "parity1"
+   #    device: "/dev/disk/by-id/ata-MODEL_ABC123"
+   #    serial: "ABC123"
+   #  - name: "data1"
+   #    device: "/dev/disk/by-id/ata-MODEL_DEF456"
+   #    serial: "DEF456"
+   #  - name: "data2"
+   #    device: "/dev/sdc"
+   #    serial: "GHI789"
+
+luks_disks_mount_boot: "true"
+luks_disks_mount_opts: "defaults,nofail,user_xattr,noexec,usrjquota=aquota.user,grpjquota=aquota.group,jqfmt=vfsv0,acl"
+luks_disks_mount_state: "mounted"
