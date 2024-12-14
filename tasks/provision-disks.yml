@@ -1,4 +1,5 @@
 ---
+# tasks/provision-disks.yml
 - name: Install required packages
   become: yes
   ansible.builtin.apt:
@@ -51,6 +52,7 @@
   loop: "{{ luks_disks }}"
 
 - name: Configure crypttab
+  become: yes
   community.general.crypttab:
     name: 'crypt-{{ item.name }}'
     backing_device: '{{ item.device }}'
