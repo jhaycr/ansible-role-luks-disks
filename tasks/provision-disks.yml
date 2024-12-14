@@ -66,8 +66,8 @@
   ansible.posix.mount:
     path: "/mnt/{{ item.name }}"
     src: "/dev/mapper/crypt-{{ item.name }}"
-    boot: true
-    opts: "defaults,nofail,user_xattr,noexec,usrjquota=aquota.user,grpjquota=aquota.group,jqfmt=vfsv0,acl"
+    boot: "{{ luks_disks_mount_boot }}"
+    opts: "{{ luks_disks_mount_opts }}"
     fstype: "{{ item.fstype }}"
-    state: "mounted"
+    state: "{{ luks_disks_mount_state }}"
   loop: "{{ luks_disks }}"
